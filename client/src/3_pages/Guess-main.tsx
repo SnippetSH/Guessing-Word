@@ -10,18 +10,81 @@ import {
   TableRow
 } from "@/4_widgets/components/ui/table";
 import { useState } from "react";
+import { currentRankStore, rankStore } from "@/2_processes/stores/word";
+import axios from "axios";
+import { TableType } from "@/5_shared/tableType";
 
 export default function GuessMain() {
-  const [inputList, setInputList] = useState<string[]>([]);
+  const [Try, setTry] = useState(0);
+  const [inputList, setInputList] = useState<TableType[]>([]);
   const [input, setInput] = useState('');
+
+  //const currentRanks = currentRankStore((state) => state.ranks);
+  const appendRank = currentRankStore((state) => state.appendRank);
+  const findRank = rankStore((state) => state.findRank);
+
+  const sortCompare = (a: TableType, b: TableType) => {
+    if(a.simil > b.simil) {
+      return -1;
+    }
+    else if(a.simil == b.simil) {
+      return 0;
+    }
+    else {
+      return 1;
+    }
+  }
+
+  const isExist = async () => {
+    const { rank, value } = findRank(input);
+    let v: number = value;
+
+    if(value === -1) {
+      await axios.get('new-word', {
+        params: {
+          word: input,
+        }
+      }).then(
+        r => {
+          v = r.data["value"];
+        }
+      ).catch(
+        e => console.log(e)
+      )
+    }
+    const tmp = [... inputList];
+
+    let r: number | '#' | '-';
+    if(rank === -1) {
+      r = '#';
+    } else if(rank > 100) {
+      r = '-';
+    } else {
+      r = rank;
+    }
+
+    v = Number((v/2).toFixed(4));
+    tmp.push({
+      try: Try,
+      word: input,
+      simil: v,
+      rank: r
+    });
+    tmp.sort(sortCompare);
+
+    setInputList(tmp);
+    setTry(Try+1);
+    appendRank({input: value});
+  }
 
   const submitClicked = () => {
     if(input === '') {
       return;
     }
-    const tmp = [...inputList];
-    tmp.push(input);
-    setInputList(tmp);
+    // const tmp = [...inputList];
+    // tmp.push(input);
+    // setInputList(tmp);
+    isExist();
     setInput('');
   }
 
@@ -42,9 +105,9 @@ export default function GuessMain() {
         <Button onClick={submitClicked} type="submit" className="mx-1">Guess</Button>
       </div>
 
-      <div className="w-0.29 h-0.45 mt-10 absolute top-64">
+      <div className="w-0.29 h-0.45 mt-7 absolute top-64">
         <Table>
-          <TableCaption>hbi</TableCaption>
+          <TableCaption>Guess The Today's Word!</TableCaption>
           <TableHeader>
             <TableRow className="text-center">
               <TableHead>#</TableHead>
@@ -58,10 +121,10 @@ export default function GuessMain() {
             {
               inputList.map((text, idx) => (
                 <TableRow key={`row+${idx}`}>
-                  <TableCell key={`cell+1+${idx}`}> {idx + 1} </TableCell>
-                  <TableCell key={`cell+2+${idx}`}> {text} </TableCell>
-                  <TableCell key={`cell+3+${idx}`}> hi </TableCell>
-                  <TableCell key={`cell+4+${idx}`}> hi </TableCell>
+                  <TableCell key={`cell+1+${idx}`}> {text.try} </TableCell>
+                  <TableCell key={`cell+2+${idx}`}> {text.word} </TableCell>
+                  <TableCell key={`cell+3+${idx}`}> {text.simil} </TableCell>
+                  <TableCell key={`cell+4+${idx}`}> {text.rank} </TableCell>
                 </TableRow>
               ))
             }

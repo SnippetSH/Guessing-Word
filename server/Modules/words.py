@@ -2,7 +2,7 @@ length_vector = 6351
 
 import json
 import os
-from Modules import makeRandom, cos_sim
+from Modules import makeRandom, cos_sim, normalize_l2
 
 def chooseWord():
     r = makeRandom(length_vector)
@@ -33,3 +33,15 @@ def makeWordRank():
 
     with open(os.path.join("dev", "rank.json"), "w", encoding='utf-8') as f:
         json.dump(rank, f, ensure_ascii=False)
+
+def compareRank(vector):
+    v = normalize_l2(vector).tolist()
+
+    with open(os.path.join("dev", "word.json"), "r", encoding='utf-8') as f:
+        current = json.load(f)
+
+    cur_vector = current[1]
+
+    dist = cos_sim(v, cur_vector)
+
+    return dist

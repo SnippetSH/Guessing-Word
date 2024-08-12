@@ -1,6 +1,3 @@
-# import sys
-# import os
-#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from .calculate import cos_sim
+from .calculate import cos_sim, normalize_l2
 from .check_dev import makeKey, checkKey, makeRandom
-from .words import chooseWord, makeWordRank
+from .words import chooseWord, makeWordRank, compareRank
